@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(cuid())
+
+  fullName String
+  email    String @unique
+  password String
+
+  phone   String?
+  country String?
+  state   String?
+  role    String  @default("farmer")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  farms         Farm[]
+  analyses      Analysis[]
+  chats         Chat[]
+  notifications Notification[]
+}
+
+model Farm {
+  id String @id @default(cuid())
+
+  name        String
+  description String?
+
+  country   String
+  state     String
+  lga       String?
+  community String?
+
+  latitude  Float?
+  longitude Float?
+
+  farmSize   Float?
+  soilType   String?
+  irrigation String?
+
+  cropType String?
+
+  image String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  analyses Analysis[]
+
+  // Farm Planner
+  tasks Task[]
+
+  // AI Notifications
+  notifications Notification[]
+
+  // AI Memory
+  conversations FarmConversation[]
+}
+
+model Analysis {
+  id String @id @default(cuid())
+
+  crop        String
+  health      String
+  disease     String
+  confidence  Int
+  severity    String
+  description String
+
+  causes           Json
+  treatment        Json
+  organicTreatment Json
+  prevention       Json
+
+  imageUrl String?
+
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  farmId String?
+  farm   Farm?   @relation(fields: [farmId], references: [id], onDelete: SetNull)
+}
+
+model Chat {
+  id String @id @default(cuid())
+
+  title String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages ChatMessage[]
+}
+
+model ChatMessage {
+  id String @id @default(cuid())
+
+  role    String
+  content String
+
+  createdAt DateTime @default(now())
+
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+}
+
+//
+// AI Memory
+//
+model FarmConversation {
+  id String @id @default(cuid())
+
+  // "user" or "assistant"
+  role String
+
+  message String
+
+  createdAt DateTime @default(now())
+
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id String @id @default(cuid())
+
+  title       String
+  description String?
+
+  status   String @default("Pending")
+  priority String @default("Medium")
+
+  progress Int @default(0)
+
+  dueDate DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  title   String
+  message String
+
+  // Weather | Disease | Task | Harvest | AI
+  type String
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  farmId String?
+  farm   Farm?   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+}
