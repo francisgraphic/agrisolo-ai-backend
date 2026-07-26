@@ -109,7 +109,7 @@ Return ONLY valid JSON.
     contents: prompt,
   });
 
-  let raw = response.text;
+  let raw = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
   raw = raw
     .replace(/```json/gi, "")
@@ -119,13 +119,18 @@ Return ONLY valid JSON.
   let recommendation;
 
   try {
-    recommendation = JSON.parse(raw);
-  } catch (err) {
-    console.log("Gemini returned invalid JSON");
-    console.log(raw);
+  recommendation = JSON.parse(raw);
+} catch (err) {
+  console.error("Gemini returned invalid JSON:");
+  console.error(raw);
 
-    return null;
-  }
+  recommendation = {
+    shouldNotify: false,
+    title: "",
+    message: "",
+    type: "AI",
+  };
+}
 
   if (!recommendation.shouldNotify) {
     return recommendation;

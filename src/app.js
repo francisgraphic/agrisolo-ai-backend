@@ -1,11 +1,7 @@
-const farmChatRoutes = require("./routes/farmChat.routes");
-const notificationRoutes = require("./routes/notification.routes");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
-
-console.log("✅ app.js loaded");
 
 // Routes
 const authRoutes = require("./routes/auth.routes");
@@ -21,40 +17,36 @@ const recommendationRoutes = require("./routes/recommendation.routes");
 const chatRoutes = require("./routes/chat.routes");
 const taskRoutes = require("./routes/task.routes");
 const farmPlannerRoutes = require("./routes/farmPlanner.routes");
-
-console.log("✅ auth.routes loaded");
-console.log("✅ farm.routes loaded");
-console.log("✅ weather.routes loaded");
-console.log("✅ crop.routes loaded");
-console.log("✅ fertilizer.routes loaded");
-console.log("✅ disease.routes loaded");
-console.log("✅ analysis.routes loaded");
-console.log("✅ vision.routes loaded");
-console.log("✅ dashboard.routes loaded");
-console.log("✅ recommendation.routes loaded");
-console.log("✅ task.routes loaded");
-console.log("✅ chat.routes loaded");
-console.log("✅ planner.routes loaded");
+const notificationRoutes = require("./routes/notification.routes");
+const farmChatRoutes = require("./routes/farmChat.routes");
 
 const app = express();
 
+// ============================
 // Middleware
+// ============================
+
 app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 
-// Home
+// ============================
+// Health Check
+// ============================
+
 app.get("/", (req, res) => {
-  res.json({
+  res.status(200).json({
     success: true,
-    message: "Agrisolo AI API is running",
+    message: "🚀 Agrisolo AI API is running.",
+    version: "1.0.0",
   });
 });
 
 // ============================
-// TEMP TEST ROUTE
+// Test Route
 // ============================
+
 app.get("/planner-test", (req, res) => {
   res.json({
     success: true,
@@ -63,27 +55,7 @@ app.get("/planner-test", (req, res) => {
 });
 
 // ============================
-// ROUTE DEBUG
-// ============================
-
-console.log("=========== ROUTE DEBUG ===========");
-console.log("authRoutes:", authRoutes);
-console.log("farmRoutes:", farmRoutes);
-console.log("weatherRoutes:", weatherRoutes);
-console.log("cropRoutes:", cropRoutes);
-console.log("fertilizerRoutes:", fertilizerRoutes);
-console.log("diseaseRoutes:", diseaseRoutes);
-console.log("analysisRoutes:", analysisRoutes);
-console.log("visionRoutes:", visionRoutes);
-console.log("dashboardRoutes:", dashboardRoutes);
-console.log("recommendationRoutes:", recommendationRoutes);
-console.log("taskRoutes:", taskRoutes);
-console.log("chatRoutes:", chatRoutes);
-console.log("farmPlannerRoutes:", farmPlannerRoutes);
-console.log("===================================");
-
-// ============================
-// API ROUTES
+// API Routes
 // ============================
 
 app.use("/api/v1/auth", authRoutes);
@@ -101,5 +73,29 @@ app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/planner", farmPlannerRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/farm-chat", farmChatRoutes);
+
+// ============================
+// 404 Handler
+// ============================
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found.`,
+  });
+});
+
+// ============================
+// Global Error Handler
+// ============================
+
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
+});
 
 module.exports = app;
