@@ -2,16 +2,16 @@ const { GoogleGenAI } = require("@google/genai");
 
 // Ensure API key exists
 if (!process.env.GEMINI_API_KEY) {
-  throw new Error("❌ GEMINI_API_KEY is missing from environment variables.");
+  throw new Error("❌ GEMINI_API_KEY is missing.");
 }
 
-// Initialize Gemini AI
+// Initialize Gemini
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-// Default model (can be overridden in Railway/.env)
-const MODEL = MODEL || "gemini-2.5-flash-lite";
+// Default model
+const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash-lite";
 
 module.exports = {
   ai,
