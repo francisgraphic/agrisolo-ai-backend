@@ -160,7 +160,7 @@ priority must be Low Medium or High.
 
   try {
     const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL,
+      model: MODEL,
       contents: prompt,
     });
 

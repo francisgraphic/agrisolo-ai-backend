@@ -1,4 +1,4 @@
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 
 async function analyzeCropImage(imageBuffer) {
   const base64Image = imageBuffer.toString("base64");
@@ -8,7 +8,7 @@ async function analyzeCropImage(imageBuffer) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const response = await ai.models.generateContent({
-        model: process.env.GEMINI_MODEL,
+        model: MODEL,
         contents: [
           {
             role: "user",

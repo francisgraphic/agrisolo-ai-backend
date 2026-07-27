@@ -58,7 +58,7 @@ Return ONLY JSON.
 `;
 
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL,
+    model: MODEL,
     contents: prompt,
   });
 

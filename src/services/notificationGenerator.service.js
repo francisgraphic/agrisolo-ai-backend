@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 
 async function generateNotifications(userId, farmId) {
   // Find farm
@@ -90,7 +90,7 @@ Return only JSON.
 `;
 
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL,
+    model: MODEL,
     contents: prompt,
   });
 
