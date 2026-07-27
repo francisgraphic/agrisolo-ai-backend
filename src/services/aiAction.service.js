@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 
 async function generateAITasks(userId, farmId) {
   const farm = await prisma.farm.findFirst({

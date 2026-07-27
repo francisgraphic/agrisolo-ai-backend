@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 const notificationService = require("./notification.service");
 
 async function getDashboard(userId, farmId) {

@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 
 async function sendMessage(userId, message, chatId = null) {
   let chat;
@@ -52,7 +52,7 @@ async function sendMessage(userId, message, chatId = null) {
 
   // Ask Gemini
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL,
+   model: MODEL,
     contents,
   });
 

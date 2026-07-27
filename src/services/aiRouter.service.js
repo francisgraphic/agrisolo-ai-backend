@@ -1,4 +1,4 @@
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 
 async function determineExpert(question) {
   const prompt = `

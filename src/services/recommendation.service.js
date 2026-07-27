@@ -1,6 +1,6 @@
 const prisma = require("../config/prisma");
 const axios = require("axios");
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 
 async function recommendCrop(userId, farmId) {
   // Find farm

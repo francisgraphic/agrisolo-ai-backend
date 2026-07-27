@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const ai = require("../config/gemini");
+const { ai, MODEL } = require("../config/gemini");
 const weatherService = require("./weather.service");
 const aiRouter = require("./aiRouter.service");
 
@@ -199,7 +199,7 @@ Instructions:
 `;
 
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL,
+    model: MODEL,
     contents: prompt,
   });
 
