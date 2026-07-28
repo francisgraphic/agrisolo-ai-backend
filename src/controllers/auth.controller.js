@@ -2,6 +2,9 @@ const authService = require("../services/auth.service");
 
 console.log("✅ auth.controller.js loaded");
 
+/**
+ * Register User
+ */
 async function register(req, res) {
   try {
     console.log("➡️ Register endpoint hit");
@@ -23,6 +26,9 @@ async function register(req, res) {
   }
 }
 
+/**
+ * Login User
+ */
 async function login(req, res) {
   try {
     console.log("➡️ Login endpoint hit");
@@ -46,7 +52,27 @@ async function login(req, res) {
   }
 }
 
+/**
+ * Get Logged-in User Profile
+ */
+async function profile(req, res) {
+  try {
+    res.status(200).json({
+      success: true,
+      data: req.user,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
 module.exports = {
   register,
   login,
+  profile,
 };
