@@ -43,14 +43,14 @@ async function analyzeImage(req, res) {
       req.file.buffer
     );
 
-    // Analyze using Gemini Vision
+    // Analyze image using Gemini Vision
     const aiResult = await visionService.analyzeCropImage(
       req.file.buffer
     );
 
     const analysis = JSON.parse(aiResult);
 
-    // Save to database
+    // Save analysis
     const saved = await prisma.analysis.create({
       data: {
         crop: analysis.crop,
@@ -78,11 +78,29 @@ async function analyzeImage(req, res) {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Gemini Error:", error);
+
+    const message = error?.message || "";
+
+    // Gemini quota exceeded
+    if (
+      message.includes("RESOURCE_EXHAUSTED") ||
+      message.includes("429") ||
+      message.toLowerCase().includes("quota")
+    ) {
+      return res.status(429).json({
+        success: false,
+        code: "QUOTA_EXCEEDED",
+        message:
+          "Today's AI request limit has been reached. Please try again tomorrow.",
+      });
+    }
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      code: "AI_ERROR",
+      message:
+        "Unable to analyze your crop image at the moment. Please try again later.",
     });
   }
 }
