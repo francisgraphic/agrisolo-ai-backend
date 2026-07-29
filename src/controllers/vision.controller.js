@@ -1,4 +1,11 @@
-exports.analyzeImage = async (req, res) => {
+const prisma = require("../config/prisma");
+const visionService = require("../services/vision.service");
+const cloudinaryService = require("../services/cloudinary.service");
+
+// ======================================
+// ANALYZE IMAGE
+// ======================================
+async function analyzeImage(req, res) {
   try {
     if (!req.file) {
       return res.status(400).json({
@@ -16,7 +23,7 @@ exports.analyzeImage = async (req, res) => {
       });
     }
 
-    // Ensure the farm belongs to the logged in user
+    // Ensure farm belongs to logged-in user
     const farm = await prisma.farm.findFirst({
       where: {
         id: farmId,
@@ -31,25 +38,25 @@ exports.analyzeImage = async (req, res) => {
       });
     }
 
-    // Upload image
+    // Upload image to Cloudinary
     const uploadedImage = await cloudinaryService.uploadImage(
       req.file.buffer
     );
 
-    // Analyze image
-    const result = await visionService.analyzeCropImage(
+    // Analyze using Gemini Vision
+    const aiResult = await visionService.analyzeCropImage(
       req.file.buffer
     );
 
-    const analysis = JSON.parse(result);
+    const analysis = JSON.parse(aiResult);
 
-    // Save analysis
+    // Save to database
     const saved = await prisma.analysis.create({
       data: {
         crop: analysis.crop,
         health: analysis.health,
         disease: analysis.disease,
-        confidence: analysis.confidence,
+        confidence: Number(analysis.confidence),
         severity: analysis.severity,
         description: analysis.description,
 
@@ -65,19 +72,130 @@ exports.analyzeImage = async (req, res) => {
       },
     });
 
-    res.json({
+    return res.status(201).json({
       success: true,
       data: saved,
     });
 
   } catch (error) {
-
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
+}
+
+// ======================================
+// GET HISTORY
+// ======================================
+async function getHistory(req, res) {
+  try {
+    const analyses = await prisma.analysis.findMany({
+      where: {
+        userId: req.user.id,
+      },
+      include: {
+        farm: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    return res.json({
+      success: true,
+      data: analyses,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// ======================================
+// GET SINGLE ANALYSIS
+// ======================================
+async function getAnalysis(req, res) {
+  try {
+    const analysis = await prisma.analysis.findFirst({
+      where: {
+        id: req.params.id,
+        userId: req.user.id,
+      },
+      include: {
+        farm: true,
+      },
+    });
+
+    if (!analysis) {
+      return res.status(404).json({
+        success: false,
+        message: "Analysis not found.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: analysis,
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// ======================================
+// DELETE ANALYSIS
+// ======================================
+async function deleteAnalysis(req, res) {
+  try {
+    const analysis = await prisma.analysis.findFirst({
+      where: {
+        id: req.params.id,
+        userId: req.user.id,
+      },
+    });
+
+    if (!analysis) {
+      return res.status(404).json({
+        success: false,
+        message: "Analysis not found.",
+      });
+    }
+
+    await prisma.analysis.delete({
+      where: {
+        id: analysis.id,
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: "Analysis deleted successfully.",
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// ======================================
+// EXPORTS
+// ======================================
+module.exports = {
+  analyzeImage,
+  getHistory,
+  getAnalysis,
+  deleteAnalysis,
 };
