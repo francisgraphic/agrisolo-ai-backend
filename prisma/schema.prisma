@@ -56,6 +56,8 @@ model Farm {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
+  planners Planner[]
+  
   analyses Analysis[]
 
   // Farm Planner
@@ -66,6 +68,22 @@ model Farm {
 
   // AI Memory
   conversations FarmConversation[]
+}
+
+model Planner {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  category    String
+  priority    String   @default("Medium")
+  status      String   @default("Pending")
+  dueDate     DateTime
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  farmId       String
+  farm         Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
 }
 
 model Analysis {

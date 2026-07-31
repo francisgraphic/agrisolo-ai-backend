@@ -20,6 +20,7 @@ const taskRoutes = require("./routes/task.routes");
 const farmPlannerRoutes = require("./routes/farmPlanner.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const farmChatRoutes = require("./routes/farmChat.routes");
+const plannerRoutes = require("./routes/planner.routes");
 
 const app = express();
 
@@ -72,9 +73,9 @@ app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/recommendation", recommendationRoutes);
 app.use("/api/v1/tasks", taskRoutes);
 app.use("/api/v1/chat", chatRoutes);
-app.use("/api/v1/planner", farmPlannerRoutes);
 app.use("/api/v1/notifications", notificationRoutes);
 app.use("/api/v1/farm-chat", farmChatRoutes);
+app.use("/api/v1/planner", plannerRoutes);
 
 // ============================
 // 404 Handler
