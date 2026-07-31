@@ -2,7 +2,15 @@ const plannerService = require("../services/planner.service");
 
 exports.createTask = async (req, res) => {
   try {
-    const task = await plannerService.createTask(req.body);
+    const data = {
+      ...req.body,
+
+      dueDate: req.body.dueDate
+        ? new Date(req.body.dueDate)
+        : null,
+    };
+
+    const task = await plannerService.createTask(data);
 
     res.status(201).json(task);
   } catch (err) {
@@ -32,9 +40,17 @@ exports.getTasks = async (req, res) => {
 
 exports.updateTask = async (req, res) => {
   try {
+    const data = {
+      ...req.body,
+
+      dueDate: req.body.dueDate
+        ? new Date(req.body.dueDate)
+        : null,
+    };
+
     const task = await plannerService.updateTask(
       req.params.id,
-      req.body
+      data
     );
 
     res.json(task);
