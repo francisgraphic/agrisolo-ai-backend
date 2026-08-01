@@ -1,7 +1,7 @@
 const prisma = require("../config/prisma");
 const { ai, MODEL } = require("../config/gemini");
 
-async function sendMessage(userId, message, chatId = null) {
+async function sendMessage(userId, farmId, message, chatId = null) {
   let chat;
 
   // Create a new chat if one doesn't exist
@@ -10,13 +10,15 @@ async function sendMessage(userId, message, chatId = null) {
       data: {
         title: message.substring(0, 50),
         userId,
+        farmId,
       },
     });
   } else {
-    chat = await prisma.chat.findFirst({
+   chat = await prisma.chat.findFirst({
       where: {
         id: chatId,
         userId,
+        farmId,
       },
     });
 

@@ -3,7 +3,7 @@ const chatService = require("../services/chat.service");
 // Send message to AI
 exports.sendMessage = async (req, res) => {
   try {
-    const { message, chatId } = req.body;
+    const { farmId, message, chatId } = req.body;
 
     if (!message) {
       return res.status(400).json({
@@ -14,6 +14,7 @@ exports.sendMessage = async (req, res) => {
 
     const result = await chatService.sendMessage(
       req.user.id,
+      farmId,
       message,
       chatId
     );
