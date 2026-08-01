@@ -26,6 +26,76 @@ exports.getAnalytics = async (req, res) => {
       recentTasks,
       cropDistribution,
     ] = await Promise.all([
+
+      prisma.farm.count({
+        where: {
+          ownerId: userId,
+        },
+      }),
+
+      prisma.task.count({
+        where: {
+          farmId: {
+            in: farmIds,
+          },
+        },
+      }),
+
+      prisma.task.count({
+        where: {
+          farmId: {
+            in: farmIds,
+          },
+          status: "Completed",
+        },
+      }),
+
+      prisma.task.count({
+        where: {
+          farmId: {
+            in: farmIds,
+          },
+          NOT: {
+            status: "Completed",
+          },
+        },
+      }),
+
+      prisma.analysis.count({
+        where: {
+          userId,
+        },
+      }),
+
+      prisma.notification.count({
+        where: {
+          userId,
+        },
+      }),
+
+      prisma.task.findMany({
+        where: {
+          farmId: {
+            in: farmIds,
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 5,
+      }),
+
+      prisma.farm.groupBy({
+        by: ["cropType"],
+        where: {
+          ownerId: userId,
+        },
+        _count: {
+          cropType: true,
+        },
+      }),
+
+    ]);
       prisma.farm.groupBy({
         by: ["cropType"],
         where: {
@@ -107,7 +177,7 @@ exports.getAnalytics = async (req, res) => {
 
         cropDistribution: cropDistribution.map((item) => ({
           crop: item.cropType || "Unknown",
-          count: item._count,
+          count: item._count.cropType,
         })),
       },
     });
