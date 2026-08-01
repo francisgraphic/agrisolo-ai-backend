@@ -24,7 +24,17 @@ exports.getAnalytics = async (req, res) => {
       analyses,
       notifications,
       recentTasks,
+      cropDistribution,
     ] = await Promise.all([
+      prisma.farm.groupBy({
+        by: ["cropType"],
+        where: {
+          ownerId: userId,
+        },
+        _count: {
+          cropType: true,
+        },
+      }),
       prisma.farm.count({
         where: {
           ownerId: userId,
@@ -94,6 +104,11 @@ exports.getAnalytics = async (req, res) => {
         analyses,
         notifications,
         recentTasks,
+
+        cropDistribution: cropDistribution.map((item) => ({
+          crop: item.cropType || "Unknown",
+          count: item._count.cropType,
+        })),
       },
     });
 
