@@ -107,7 +107,7 @@ exports.getAnalytics = async (req, res) => {
 
         cropDistribution: cropDistribution.map((item) => ({
           crop: item.cropType || "Unknown",
-          count: item._count.cropType,
+          count: item._count,
         })),
       },
     });
