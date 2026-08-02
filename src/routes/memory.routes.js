@@ -2,12 +2,12 @@ const express = require("express");
 
 const router = express.Router();
 
-const auth = require("../middleware/auth.middleware");
+const { protect } = require("../middleware/auth.middleware");
 
 const memory = require("../controllers/memory.controller");
 
-router.get("/:farmId", auth, memory.getMemory);
+router.get("/:farmId", protect, memory.getMemory);
 
-router.delete("/:farmId", auth, memory.clearMemory);
+router.delete("/:farmId", protect, memory.clearMemory);
 
 module.exports = router;
