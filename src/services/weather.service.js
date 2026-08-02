@@ -1,6 +1,8 @@
 const axios = require("axios");
 const prisma = require("../config/prisma");
+
 const weatherAdvisor = require("./weatherAdvisor.service");
+const weatherRules = require("./weatherRules.service");
 
 const WEATHER_CODES = {
   0: "Clear Sky",
@@ -54,12 +56,9 @@ async function getFarmWeather(userId, farmId) {
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${farm.latitude}` +
     `&longitude=${farm.longitude}` +
-    `&current=` +
-    `temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code` +
-    `&daily=` +
-    `weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
-    `&hourly=` +
-    `temperature_2m,relative_humidity_2m,precipitation_probability` +
+    `&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+    `&hourly=temperature_2m,relative_humidity_2m,precipitation_probability` +
     `&forecast_days=7` +
     `&timezone=auto`;
 
@@ -96,56 +95,39 @@ async function getFarmWeather(userId, farmId) {
         data.hourly.precipitation_probability[index],
     })) || [];
 
-  // =====================================
-  // AI Weather Recommendation
-  // =====================================
+  // ==========================================
+  // RULE-BASED WEATHER ADVICE (Always Works)
+  // ==========================================
 
-  let advice;
+  let advice = weatherRules.generateWeatherRules({
+    farm,
+    current,
+    forecast,
+  });
+
+  // ==========================================
+  // AI Enhancement (Optional)
+  // ==========================================
 
   try {
-    advice = await weatherAdvisor.generateWeatherAdvice({
-      farm,
-      current,
-      forecast,
-    });
+    const aiAdvice =
+      await weatherAdvisor.generateWeatherAdvice({
+        farm,
+        current,
+        forecast,
+      });
+
+    advice = {
+      ...advice,
+      ...aiAdvice,
+    };
+
   } catch (error) {
+
     console.error("Weather AI Error:", error);
 
-    const message = error?.message || "";
-
-    if (
-      message.includes("RESOURCE_EXHAUSTED") ||
-      message.includes("429") ||
-      message.toLowerCase().includes("quota")
-    ) {
-      advice = {
-        summary:
-          "AI weather recommendation is unavailable because today's AI request limit has been reached.",
-
-        weatherAlert:
-          "Weather alerts are temporarily unavailable.",
-
-        riskLevel: "Unavailable",
-
-        recommendations: [
-          "Please try again tomorrow when the AI quota resets.",
-        ],
-      };
-    } else {
-      advice = {
-        summary:
-          "AI weather recommendation is temporarily unavailable.",
-
-        weatherAlert:
-          "Unable to generate weather alerts at this time.",
-
-        riskLevel: "Unknown",
-
-        recommendations: [
-          "Weather data is still available.",
-        ],
-      };
-    }
+    // Keep rule-based advice.
+    // Gemini only enhances it.
   }
 
   return {
