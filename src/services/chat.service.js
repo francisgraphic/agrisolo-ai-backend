@@ -14,7 +14,7 @@ async function sendMessage(userId, farmId, message, chatId = null) {
       },
     });
   } else {
-   chat = await prisma.chat.findFirst({
+    chat = await prisma.chat.findFirst({
       where: {
         id: chatId,
         userId,
@@ -36,7 +36,7 @@ async function sendMessage(userId, farmId, message, chatId = null) {
     },
   });
 
-  // Load full conversation history
+  // Load conversation history
   const history = await prisma.chatMessage.findMany({
     where: {
       chatId: chat.id,
@@ -46,15 +46,47 @@ async function sendMessage(userId, farmId, message, chatId = null) {
     },
   });
 
-  // Convert to Gemini conversation format
-  const contents = history.map((msg) => ({
-    role: msg.role === "assistant" ? "model" : "user",
-    parts: [{ text: msg.content }],
-  }));
+  // Load farm details
+  const farm = await prisma.farm.findUnique({
+    where: {
+      id: farmId,
+    },
+  });
+
+  // System prompt
+  const systemPrompt = `
+You are Agrisolo AI, an expert agricultural assistant.
+
+Your goal is to help farmers improve productivity through practical,
+accurate and locally relevant agricultural advice.
+
+Current Farm
+
+Farm Name: ${farm?.name || "Unknown"}
+Crop: ${farm?.cropType || "Unknown"}
+Location: ${farm?.state || ""}, ${farm?.country || ""}
+Soil Type: ${farm?.soilType || "Unknown"}
+Farm Size: ${farm?.farmSize || "Unknown"} hectares
+
+Always use this information when giving recommendations.
+If information is missing, ask questions before making assumptions.
+`;
+
+  const contents = [
+    {
+      role: "user",
+      parts: [{ text: systemPrompt }],
+    },
+
+    ...history.map((msg) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    })),
+  ];
 
   // Ask Gemini
   const response = await ai.models.generateContent({
-   model: MODEL,
+    model: MODEL,
     contents,
   });
 
@@ -67,14 +99,6 @@ async function sendMessage(userId, farmId, message, chatId = null) {
       content: reply,
       chatId: chat.id,
     },
-  });
-
-  // Update chat timestamp
-  await prisma.chat.update({
-    where: {
-      id: chat.id,
-    },
-    data: {},
   });
 
   return {
