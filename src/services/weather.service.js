@@ -1,3 +1,4 @@
+const activityLogger = require("./activityLogger.service");
 const axios = require("axios");
 const prisma = require("../config/prisma");
 
@@ -128,6 +129,25 @@ async function getFarmWeather(userId, farmId) {
 
     // Keep rule-based advice.
     // Gemini only enhances it.
+  }
+
+    // Save weather activity
+  try {
+    await activityLogger.log({
+      farmId,
+      role: "system",
+      type: "weather",
+      title: "Weather Forecast Updated",
+      message: advice.summary,
+      metadata: {
+        temperature: current.temperature,
+        humidity: current.humidity,
+        rainProbability: current.rainProbability,
+        riskLevel: advice.riskLevel,
+      },
+    });
+  } catch (err) {
+    console.error("Activity Logger Error:", err);
   }
 
   return {

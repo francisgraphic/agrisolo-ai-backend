@@ -54,6 +54,18 @@ text = text
   .replace(/```/g, "")
   .trim();
 
+  await activityLogger.log({
+      farmId,
+      role: "system",
+      type: "diagnosis",
+      title: diagnosis.crop,
+      message: diagnosis.diagnosis,
+      metadata: {
+          disease: diagnosis.disease,
+          confidence: diagnosis.confidence,
+      },
+  });
+
 return text;
 
     } catch (error) {

@@ -1,3 +1,7 @@
+const activityLogger = require("./activityLogger.service");
+const contextBuilder = require("./contextBuilder.service");
+const memoryExtractor = require("./memoryExtractor.service");
+const farmMemory = require("./farmMemory.service");
 const prisma = require("../config/prisma");
 const { ai, MODEL } = require("../config/gemini");
 
@@ -46,6 +50,22 @@ async function sendMessage(userId, farmId, message, chatId = null) {
     },
   });
 
+  const memories = await farmMemory.getMemory(farmId, 20);
+  const memorySummary =
+  contextBuilder.buildContext(farm, memories);
+
+  // Load recent farm activity
+  const recentActivity = await activityLogger.getRecentActivity(
+    farmId,
+    15
+  );
+
+  const activityContext = recentActivity
+    .map((activity) => {
+      return `• ${activity.createdAt.toLocaleString()} | ${activity.type} | ${activity.title} | ${activity.message}`;
+    })
+    .join("\n");
+
   // Load farm details
   const farm = await prisma.farm.findUnique({
     where: {
@@ -55,22 +75,85 @@ async function sendMessage(userId, farmId, message, chatId = null) {
 
   // System prompt
   const systemPrompt = `
-You are Agrisolo AI, an expert agricultural assistant.
+You are Agrisolo AI.
 
-Your goal is to help farmers improve productivity through practical,
-accurate and locally relevant agricultural advice.
+You are an intelligent agricultural assistant.
+
+You remember previous farm activities and use them when giving advice.
 
 Current Farm
 
-Farm Name: ${farm?.name || "Unknown"}
+Farm Name: ${farm?.name}
+
 Crop: ${farm?.cropType || "Unknown"}
-Location: ${farm?.state || ""}, ${farm?.country || ""}
+
+Country: ${farm?.country}
+
+State: ${farm?.state}
+
 Soil Type: ${farm?.soilType || "Unknown"}
+
 Farm Size: ${farm?.farmSize || "Unknown"} hectares
 
-Always use this information when giving recommendations.
-If information is missing, ask questions before making assumptions.
+------------------------------------
+
+Recent Farm Activity
+
+${activityContext || "No recent activity."}
+
+------------------------------------
+
+Instructions
+
+Always consider previous activities before answering.
+
+If irrigation happened yesterday,
+do not recommend irrigating again unless necessary.
+
+If fertilizer was recently applied,
+avoid recommending another fertilizer immediately.
+
+If disease diagnosis was performed recently,
+use that information in future recommendations.
+
+Respond naturally like an experienced agronomist who has been managing this farm for months.
 `;
+
+const extractedMemories =
+  memoryExtractor.extractMemory(reply);
+
+if (extractedMemories.length > 0) {
+
+  for (const memory of extractedMemories) {
+
+    await farmMemory.saveMemory({
+      farmId,
+      role: "assistant",
+      title: memory.title,
+      message: memory.message,
+      eventType: memory.eventType,
+    });
+
+  }
+
+} else {
+
+  await farmMemory.saveMemory({
+    farmId,
+    role: "assistant",
+    title: "AI Recommendation",
+    message: reply,
+    eventType: "conversation",
+  });
+
+}
+await farmMemory.saveMemory({
+  farmId,
+  role: "user",
+  title: "Farmer Question",
+  message,
+  eventType: "conversation",
+});
 
   const contents = [
     {
